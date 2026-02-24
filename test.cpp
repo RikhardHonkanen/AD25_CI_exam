@@ -50,7 +50,7 @@ template <typename T> class QueueFixture : public ::testing::Test
 
     void SetUp(void) override
     {
-        EXPECT_EQ(0, queue.capacity());
+        EXPECT_EQ(0, queue.available());
 
         ON_CALL(memory, malloc(_)).WillByDefault(Invoke(&memory, &Memory::allocate));
 
@@ -59,7 +59,7 @@ template <typename T> class QueueFixture : public ::testing::Test
         for (size_t i = 1; i <= values.size(); i++)
         {
             EXPECT_TRUE(queue.enqueue(values[i - 1]));
-            EXPECT_EQ(i, queue.capacity());
+            EXPECT_EQ(i, queue.available());
         }
     }
 
@@ -69,17 +69,15 @@ template <typename T> class QueueFixture : public ::testing::Test
 using TestTypes = ::testing::Types<int, float, std::string>;
 TYPED_TEST_SUITE(QueueFixture, TestTypes);
 
-// TYPED_TEST(QueueFixture, mallocFails)
-// {
-//     EXPECT_CALL(this->memory, malloc(_)).WillRepeatedly(Return(nullptr));
-//     EXPECT_FALSE(this->queue.enqueue(this->values[0]));
-// }
+TYPED_TEST(QueueFixture, mallocFails)
+{
+    EXPECT_CALL(this->memory, malloc(_)).WillRepeatedly(Return(nullptr));
+    EXPECT_FALSE(this->queue.enqueue(this->values[0]));
+}
 
 TYPED_TEST(QueueFixture, testClear)
 {
-    EXPECT_EQ(0, 0);
-
-    // EXPECT_EQ(this->values.size(), this->queue.available());
-    // this->queue.clear();
-    // EXPECT_EQ(0, this->queue.available());
+    EXPECT_EQ(this->values.size(), this->queue.available());
+    this->queue.clear();
+    EXPECT_EQ(0, this->queue.available());
 }
