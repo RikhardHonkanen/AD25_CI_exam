@@ -81,3 +81,18 @@ TYPED_TEST(QueueFixture, testClear)
     this->queue.clear();
     EXPECT_EQ(0, this->queue.available());
 }
+
+TYPED_TEST(QueueFixture, testDequeue)
+{
+    TypeParam item;
+    size_t size{this->queue.available()};
+
+    for (size_t i = 1; i <= size; i++)
+    {
+        EXPECT_TRUE(this->queue.dequeue(item));
+        EXPECT_EQ(size - i, this->queue.available());
+        EXPECT_EQ(item, this->values[i - 1]);
+    }
+
+    EXPECT_FALSE(this->queue.dequeue(item));
+}
