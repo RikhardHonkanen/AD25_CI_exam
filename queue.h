@@ -43,6 +43,7 @@
 #define QUEUE_H
 
 #include <cstddef>
+#include <stdexcept>
 #include <type_traits>
 
 constexpr int SIZE_MIN{3};
@@ -96,10 +97,29 @@ template <typename T> class Queue
 
     Queue(IMemory &_memory, int _size) : memory{_memory}, size{_size}
     {
-        // create queue
         if (size < SIZE_MIN)
         {
             throw std::invalid_argument{"Invalid size"};
+        }
+
+        node_t *previous = nullptr;
+        for (int i{0}; i < size; i++)
+        {
+            node_t *current = create_node(0);
+            if (i == 0)
+            {
+                head = current;
+                tail = current;
+            }
+            if (i == size - 1) // Last node, point to start
+            {
+                current->next = head;
+            }
+            if (previous != nullptr)
+            {
+                previous->next = current;
+            }
+            previous = current;
         }
     }
 
@@ -111,7 +131,11 @@ template <typename T> class Queue
 
     bool dequeue(T &item);
 
-    size_t size(void) { return count; }
+    size_t available(void) { return count; }
+
+    size_t capacity(void) { return size; }
+
+    bool full(void) { return size == count; }
 
     void clear(void);
 
@@ -149,7 +173,26 @@ template <typename T> Queue<T> &Queue<T>::operator=(Queue<T> &&that) noexcept
 template <typename T> bool Queue<T>::enqueue(const T &item)
 {
     bool status{false};
-    (void)item;
+
+    if (&item != nullptr)
+    {
+        status = true;
+        if (tail->next == head) // Queue full
+        {
+            tail = head;
+            head = head->next;
+            head->data = item;
+        }
+        else
+        {
+            (count)++;
+            tail->data = item;
+            tail = tail->next;
+        }
+
+        count++;
+    }
+
     return status;
 }
 
@@ -162,13 +205,6 @@ template <typename T> bool Queue<T>::dequeue(T &item)
 
 template <typename T> void Queue<T>::clear(void)
 {
-    while (head != nullptr)
-    {
-        tail = head;
-        head = head->next;
-        delete_node(tail);
-    }
-
     count = 0;
     tail = head;
 }
