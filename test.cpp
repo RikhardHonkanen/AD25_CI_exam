@@ -96,3 +96,20 @@ TYPED_TEST(QueueFixture, testDequeue)
 
     EXPECT_FALSE(this->queue.dequeue(item));
 }
+
+TYPED_TEST(QueueFixture, testOnlyMovable)
+{
+    EXPECT_FALSE(std::is_copy_constructible<Queue<TypeParam>>::value);
+    EXPECT_FALSE(std::is_copy_assignable<Queue<TypeParam>>::value);
+
+    EXPECT_TRUE(std::is_move_constructible<Queue<TypeParam>>::value);
+    EXPECT_TRUE(std::is_move_assignable<Queue<TypeParam>>::value);
+
+    Queue<TypeParam> temp{std::move(this->queue)};
+    EXPECT_EQ(this->values.size(), temp.available());
+    EXPECT_EQ(0, this->queue.available());
+
+    this->queue = std::move(temp);
+    EXPECT_EQ(this->values.size(), this->queue.available());
+    EXPECT_EQ(0, temp.available());
+}
