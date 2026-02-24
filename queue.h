@@ -43,6 +43,7 @@
 #define QUEUE_H
 
 #include <cstddef>
+#include <iostream>
 #include <stdexcept>
 #include <type_traits>
 
@@ -105,7 +106,7 @@ template <typename T> class Queue
         node_t *previous = nullptr;
         for (int i{0}; i < size; i++)
         {
-            node_t *current = create_node(0);
+            node_t *current = create_node(nullptr);
             if (i == 0)
             {
                 head = current;
@@ -138,6 +139,98 @@ template <typename T> class Queue
     bool full(void) { return size == count; }
 
     void clear(void);
+
+    bool queue_resize(int new_size)
+    {
+        bool status = false;
+
+        if (new_size > 2)
+        {
+            status = true;
+
+            if (new_size > size)
+            {
+                node_t *current = tail;
+
+                while (current->next != head) // Go to last node (connecting to head)
+                {
+                    current = current->next;
+                }
+                for (size_t i = 0; i < new_size - size; i++)
+                {
+                    node_t *new_current = create_node(nullptr);
+                    current->next = new_current;
+                    current = new_current;
+
+                    if (i == (new_size - size - 1)) // Last insert
+                    {
+                        current->next = head;
+                    }
+                }
+                size = new_size;
+            }
+            else if (new_size < size)
+            {
+                int removed = 0;
+                if (full())
+                {
+                    node_t *current = head;
+
+                    for (size_t i = 0; i < size - new_size; i++)
+                    {
+                        node_t *next = current->next;
+                        head = current->next;
+                        delete_node(current);
+                        current = head;
+                    }
+
+                    tail->next = current;
+                    count = new_size;
+                    size = new_size;
+                }
+                else
+                {
+                    node_t *current = tail;
+
+                    for (size_t i = 0; i < size - new_size; i++)
+                    {
+                        if (current->next->data == NULL)
+                        {
+                            node_t *new_next = current->next->next;
+                            delete_node(current->next);
+                            current->next = new_next;
+                        }
+                        else // Data present, move head
+                        {
+                            head = head->next;
+                            delete_node(current->next);
+                            current->next = head;
+                        }
+                    }
+                    size = new_size;
+                }
+            }
+        }
+
+        return status;
+    }
+
+    // template <typename U = T> std::enable_if_t<std::is_arithmetic_v<U>, double> average() const
+    // {
+    //     if (count == 0)
+    //         return 0.0;
+
+    //     double sum{0.0};
+    //     std::size_t index = head;
+
+    //     for (std::size_t i = 0; i < count; ++i)
+    //     {
+    //         sum += static_cast<double>(array[index]);
+    //         index = (index + 1) % N;
+    //     }
+
+    //     return sum / static_cast<double>(count);
+    // }
 
     ~Queue() { clear(); }
 };
@@ -179,9 +272,9 @@ template <typename T> bool Queue<T>::enqueue(const T &item)
         status = true;
         if (tail->next == head) // Queue full
         {
+            tail->data = item;
             tail = head;
             head = head->next;
-            head->data = item;
         }
         else
         {
@@ -199,7 +292,16 @@ template <typename T> bool Queue<T>::enqueue(const T &item)
 template <typename T> bool Queue<T>::dequeue(T &item)
 {
     bool status{false};
-    (void)item;
+
+    if (head->data != nullptr)
+    {
+        status = true;
+        item = head->data;
+        head->data = nullptr;
+        head = head->next;
+        count--;
+    }
+
     return status;
 }
 
