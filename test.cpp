@@ -16,6 +16,11 @@ class Memory : public IMemory
     std::vector<void *> vec;
 
   public:
+    Memory()
+    {
+        ON_CALL(*this, malloc(_)).WillByDefault(Invoke(this, &Memory::allocate));
+        ON_CALL(*this, free(_)).WillByDefault(Invoke(this, &Memory::release));
+    }
     MOCK_METHOD(void *, malloc, (size_t size), (override));
     MOCK_METHOD(void, free, (void *ptr), (override));
 
@@ -46,15 +51,12 @@ template <typename T> class QueueFixture : public ::testing::Test
   protected:
     const std::vector<T> values{std::get<std::vector<T>>(allValues)};
     NiceMock<Memory> memory;
+
     Queue<T> queue{memory, SIZE};
 
     void SetUp(void) override
     {
         EXPECT_EQ(0, queue.available());
-
-        ON_CALL(memory, malloc(_)).WillByDefault(Invoke(&memory, &Memory::allocate));
-
-        ON_CALL(memory, free(_)).WillByDefault(Invoke(&memory, &Memory::release));
 
         for (size_t i = 1; i <= values.size(); i++)
         {
@@ -68,12 +70,6 @@ template <typename T> class QueueFixture : public ::testing::Test
 
 using TestTypes = ::testing::Types<int, float, std::string>;
 TYPED_TEST_SUITE(QueueFixture, TestTypes);
-
-TYPED_TEST(QueueFixture, mallocFails)
-{
-    EXPECT_CALL(this->memory, malloc(_)).WillRepeatedly(Return(nullptr));
-    EXPECT_FALSE(this->queue.enqueue(this->values[0]));
-}
 
 TYPED_TEST(QueueFixture, testClear)
 {

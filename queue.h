@@ -96,7 +96,7 @@ template <typename T> class Queue
     Queue(const Queue &) = delete;
     Queue &operator=(const Queue &) = delete;
 
-    Queue(IMemory &_memory, int _size) : memory{_memory}, size{_size}
+    Queue(IMemory &_memory, size_t _size) : memory{_memory}, size{_size}
     {
         if (size < SIZE_MIN)
         {
@@ -104,24 +104,22 @@ template <typename T> class Queue
         }
 
         node_t *previous = nullptr;
-        for (int i{0}; i < size; i++)
+
+        for (size_t i = 0; i < size; ++i)
         {
-            node_t *current = create_node(nullptr);
-            if (i == 0)
-            {
+            node_t *current = create_node(T{});
+
+            if (!head)
                 head = current;
-                tail = current;
-            }
-            if (i == size - 1) // Last node, point to start
-            {
-                current->next = head;
-            }
-            if (previous != nullptr)
-            {
+
+            if (previous)
                 previous->next = current;
-            }
+
             previous = current;
         }
+
+        previous->next = head;
+        tail = head;
     }
 
     Queue(Queue &&that) noexcept;
@@ -265,39 +263,28 @@ template <typename T> Queue<T> &Queue<T>::operator=(Queue<T> &&that) noexcept
 
 template <typename T> bool Queue<T>::enqueue(const T &item)
 {
-    bool status{false};
-
-    if (&item != nullptr)
+    tail->data = item;
+    if (count == size) // Queue full
     {
-        status = true;
-        if (tail->next == head) // Queue full
-        {
-            tail->data = item;
-            tail = head;
-            head = head->next;
-        }
-        else
-        {
-            (count)++;
-            tail->data = item;
-            tail = tail->next;
-        }
-
-        count++;
+        head = head->next;
     }
+    else
+    {
+        (count)++;
+    }
+    tail = tail->next;
 
-    return status;
+    return true;
 }
 
 template <typename T> bool Queue<T>::dequeue(T &item)
 {
     bool status{false};
 
-    if (head->data != nullptr)
+    if (count > 0)
     {
         status = true;
         item = head->data;
-        head->data = nullptr;
         head = head->next;
         count--;
     }
@@ -307,8 +294,21 @@ template <typename T> bool Queue<T>::dequeue(T &item)
 
 template <typename T> void Queue<T>::clear(void)
 {
-    count = 0;
-    tail = head;
+    if (head)
+    {
+        node_t *current = head;
+
+        for (size_t i = 0; i < size; ++i)
+        {
+            node_t *next = current->next;
+            delete_node(current);
+            current = next;
+        }
+
+        head = nullptr;
+        tail = nullptr;
+        count = 0;
+    }
 }
 
 #endif
