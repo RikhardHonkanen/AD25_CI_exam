@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -Wextra -Wpedantic -std=c++14 -MMD
+CFLAGS = -Wall -Wextra -Wpedantic -std=c++17 -MMD
 
 TEST_EXE = test
 BUILD_DIR = build
