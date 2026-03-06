@@ -1,6 +1,7 @@
 #include "queue.h"
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <numeric>
 
 using ::testing::_;
 using ::testing::Invoke;
@@ -100,6 +101,20 @@ TYPED_TEST(QueueFixture, testResize)
     EXPECT_EQ(SIZE + 1, this->queue.capacity());
     EXPECT_TRUE(this->queue.resize(SIZE - 1));
     EXPECT_EQ(SIZE - 1, this->queue.capacity());
+}
+
+TYPED_TEST(QueueFixture, testAverage)
+{
+    if constexpr (std::is_arithmetic_v<TypeParam>)
+    {
+        double expected =
+            std::accumulate(this->values.begin(), this->values.end(), 0.0) / this->values.size();
+        EXPECT_DOUBLE_EQ(expected, this->queue.average());
+    }
+    else
+    {
+        GTEST_SKIP() << "average() not supported for non-arithmetic types";
+    }
 }
 
 TYPED_TEST(QueueFixture, testOnlyMovable)
