@@ -93,6 +93,15 @@ TYPED_TEST(QueueFixture, testDequeue)
     EXPECT_FALSE(this->queue.dequeue(item));
 }
 
+TYPED_TEST(QueueFixture, testResize)
+{
+    EXPECT_EQ(this->values.size(), this->queue.available());
+    EXPECT_TRUE(this->queue.resize(SIZE + 1));
+    EXPECT_EQ(SIZE + 1, this->queue.capacity());
+    EXPECT_TRUE(this->queue.resize(SIZE - 1));
+    EXPECT_EQ(SIZE - 1, this->queue.capacity());
+}
+
 TYPED_TEST(QueueFixture, testOnlyMovable)
 {
     EXPECT_FALSE(std::is_copy_constructible<Queue<TypeParam>>::value);

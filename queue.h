@@ -138,11 +138,11 @@ template <typename T> class Queue
 
     void clear(void);
 
-    bool queue_resize(int new_size)
+    bool resize(size_t new_size)
     {
-        bool status = false;
+        bool status{false};
 
-        if (new_size > 2)
+        if (new_size >= SIZE_MIN)
         {
             status = true;
 
@@ -156,7 +156,7 @@ template <typename T> class Queue
                 }
                 for (size_t i = 0; i < new_size - size; i++)
                 {
-                    node_t *new_current = create_node(nullptr);
+                    node_t *new_current = create_node(T{});
                     current->next = new_current;
                     current = new_current;
 
@@ -169,43 +169,26 @@ template <typename T> class Queue
             }
             else if (new_size < size)
             {
-                int removed = 0;
-                if (full())
-                {
-                    node_t *current = head;
+                size_t nodes_to_remove = size - new_size;
 
-                    for (size_t i = 0; i < size - new_size; i++)
+                while (nodes_to_remove > 0)
+                {
+                    if (count < size) // unused nodes exist
                     {
-                        node_t *next = current->next;
-                        head = current->next;
-                        delete_node(current);
-                        current = head;
+                        node_t *remove = tail->next;
+                        tail->next = remove->next;
+                        delete_node(remove);
+                    }
+                    else
+                    {
+                        node_t *remove = head;
+                        head = head->next;
+                        delete_node(remove);
+                        count--;
                     }
 
-                    tail->next = current;
-                    count = new_size;
-                    size = new_size;
-                }
-                else
-                {
-                    node_t *current = tail;
-
-                    for (size_t i = 0; i < size - new_size; i++)
-                    {
-                        if (current->next->data == NULL)
-                        {
-                            node_t *new_next = current->next->next;
-                            delete_node(current->next);
-                            current->next = new_next;
-                        }
-                        else // Data present, move head
-                        {
-                            head = head->next;
-                            delete_node(current->next);
-                            current->next = head;
-                        }
-                    }
-                    size = new_size;
+                    size--;
+                    nodes_to_remove--;
                 }
             }
         }
@@ -213,22 +196,22 @@ template <typename T> class Queue
         return status;
     }
 
-    // template <typename U = T> std::enable_if_t<std::is_arithmetic_v<U>, double> average() const
-    // {
-    //     if (count == 0)
-    //         return 0.0;
+    template <typename U = T> std::enable_if_t<std::is_arithmetic_v<U>, double> average() const
+    {
+        if (count == 0)
+            return 0.0;
 
-    //     double sum{0.0};
-    //     std::size_t index = head;
+        double sum{0.0};
+        node_t *current = head;
 
-    //     for (std::size_t i = 0; i < count; ++i)
-    //     {
-    //         sum += static_cast<double>(array[index]);
-    //         index = (index + 1) % N;
-    //     }
+        for (std::size_t i = 0; i < count; ++i)
+        {
+            sum += static_cast<double>(current->data);
+            current = current->next;
+        }
 
-    //     return sum / static_cast<double>(count);
-    // }
+        return sum / static_cast<double>(count);
+    }
 
     ~Queue() { clear(); }
 };
